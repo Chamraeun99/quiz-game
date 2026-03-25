@@ -1,0 +1,20 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+  background:
+    radial-gradient(circle at 10% 10%, rgba(255, 196, 154, 0.35) 0%, transparent 32%),
+    radial-gradient(circle at 80% 12%, rgba(147, 190, 255, 0.42) 0%, transparent 30%),
+    linear-gradient(165deg, #f4f8ff 0%, #e8f2ff 40%, #fdfdff 100%);
+  color: #0f2748;
+}
