@@ -62,14 +62,6 @@ class AdminAuthController extends Controller
             return redirect()->away("{$frontendBase}/admin?admin_error={$message}");
         }
 
-        $allowedGoogleAdminEmail = mb_strtolower(trim((string) env('ADMIN_GOOGLE_ALLOWED_EMAIL', '')));
-
-        if ($allowedGoogleAdminEmail !== '' && ! hash_equals($allowedGoogleAdminEmail, $email)) {
-            $message = rawurlencode('This Google account is not allowed for admin login.');
-
-            return redirect()->away("{$frontendBase}/admin?admin_error={$message}");
-        }
-
         // Allow Google sign-in only for users that already exist in PostgreSQL.
         $user = User::query()->whereRaw('LOWER(email) = ?', [$email])->first();
 
