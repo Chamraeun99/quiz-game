@@ -100,6 +100,9 @@ const translations = {
     resultBestStreak: 'Best Streak',
     resultContinue: 'Continue',
     resultPlayAgain: 'Play Again',
+    ariaOpenMenu: 'Open mobile menu',
+    ariaCloseMenu: 'Close mobile menu',
+    ariaQuickToggle: 'Toggle header theme',
     ariaMainMenu: 'Main menu',
     ariaProfilePhoto: 'Profile photo placeholder',
     ariaHeroArtwork: 'Quiz game hero artwork',
@@ -349,6 +352,9 @@ const translations = {
     resultBestStreak: 'ស្ទ្រីកល្អបំផុត',
     resultContinue: 'បន្ត',
     resultPlayAgain: 'លេងម្តងទៀត',
+    ariaOpenMenu: 'បើកម៉ឺនុយទូរស័ព្ទ',
+    ariaCloseMenu: 'បិទម៉ឺនុយទូរស័ព្ទ',
+    ariaQuickToggle: 'ប្ដូររចនាប័ទ្ម Header',
     ariaMainMenu: 'ម៉ឺនុយមេ',
     ariaProfilePhoto: 'កន្លែងរូបភាពប្រវត្តិរូប',
     ariaHeroArtwork: 'រូបភាព Hero ហ្គេមសំណួរ',
@@ -871,6 +877,7 @@ function App() {
   const [siteBanner2ImageUploading, setSiteBanner2ImageUploading] = useState(false);
   const [siteContent, setSiteContent] = useState(loadSiteContent);
   const [siteContentForm, setSiteContentForm] = useState(loadSiteContent);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isAdminRoute =
     typeof window !== 'undefined' && window.location.pathname.startsWith('/admin');
@@ -1009,6 +1016,56 @@ function App() {
   useEffect(() => {
     localStorage.setItem(SITE_CONTENT_STORAGE_KEY, JSON.stringify(siteContent));
   }, [siteContent]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    const handleResize = () => {
+      if (window.innerWidth > 640) {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    const handleKeydown = (event) => {
+      if (event.key === 'Escape') {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeydown);
+
+    return () => window.removeEventListener('keydown', handleKeydown);
+  }, []);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return undefined;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+
+    if (mobileMenuOpen && window.innerWidth <= 640) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = previousOverflow || '';
+    }
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileMenuOpen]);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
@@ -1324,6 +1381,66 @@ function App() {
     exitQuizToSetup();
     setActiveView('Home');
   };
+
+  const handleHeaderSearchSubmit = (event) => {
+    handleQuizSearchSubmit(event);
+    setMobileMenuOpen(false);
+  };
+
+  const handleNavSelection = (view) => {
+    setActiveView(view);
+    setMobileMenuOpen(false);
+  };
+
+  const handleHeaderHomeClick = () => {
+    handleBackToHome();
+    setMobileMenuOpen(false);
+  };
+
+  const handleHeaderThemeToggle = () => {
+    toggleTheme();
+  };
+
+  const mobileMenuItems = isAdminRoute
+    ? []
+    : [
+        {
+          key: 'Home',
+          label: t.nav.Home ?? 'Home',
+          icon: (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3.5 10.5 12 4l8.5 6.5" />
+              <path d="M5.5 9.8V20h13V9.8" />
+            </svg>
+          ),
+        },
+        {
+          key: 'Quiz',
+          label: t.nav.Quiz ?? 'Quiz',
+          icon: (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M8 4.5h8.5a2 2 0 0 1 2 2V19a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6.5a2 2 0 0 1 2-2Z" />
+              <path d="M9 9h6" />
+              <path d="M9 13h6" />
+              <path d="M9 17h4" />
+            </svg>
+          ),
+        },
+        {
+          key: 'About Authorizer',
+          label: t.nav['About Authorizer'] ?? 'About Authorizer',
+          icon: (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="8" r="3.25" />
+              <path d="M5.5 19.5a6.5 6.5 0 0 1 13 0" />
+            </svg>
+          ),
+        },
+      ];
+
+  const mobileProfileTitle = siteContent.footerBrand || t.footerBrand;
+  const mobileProfileSubtitle = siteContent.footerDescription || t.footerBrandDesc;
+  const mobileProfileInitial = (t.brandName || 'Q').trim().charAt(0).toUpperCase();
 
   const restartQuiz = () => launchQuiz();
 
@@ -1733,9 +1850,132 @@ function App() {
         <span className="ambient-orb orb-c" />
       </div>
 
-      <header className="top-header">
+      <div
+        className={`mobile-menu-backdrop ${mobileMenuOpen ? 'visible' : ''}`}
+        aria-hidden={mobileMenuOpen ? 'false' : 'true'}
+        onClick={() => setMobileMenuOpen(false)}
+      />
+
+      <aside className={`mobile-side-panel ${mobileMenuOpen ? 'open' : ''}`} aria-hidden={!mobileMenuOpen}>
+        <div className="mobile-side-panel-inner">
+          <div className="mobile-panel-profile">
+            <div className="mobile-panel-avatar" aria-hidden="true">{mobileProfileInitial}</div>
+            <div className="mobile-panel-profile-text">
+              <strong>{t.brandName}</strong>
+              <span>{mobileProfileTitle}</span>
+              <small>{mobileProfileSubtitle}</small>
+            </div>
+          </div>
+
+          {!isAdminRoute && (
+            <form className="mobile-panel-search" onSubmit={handleHeaderSearchSubmit} role="search">
+              <span>{t.searchQuiz}</span>
+              <input
+                id="quiz-mobile-search"
+                type="text"
+                value={quizSearchInput}
+                onChange={handleQuizSearchInputChange}
+                placeholder={t.searchQuizPlaceholder}
+              />
+              <button type="submit" className="mobile-panel-search-btn">
+                {t.searchButton}
+              </button>
+            </form>
+          )}
+
+          <nav className="mobile-panel-nav" aria-label={t.ariaMainMenu}>
+            {mobileMenuItems.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                className={`mobile-panel-nav-item ${activeView === item.key ? 'active' : ''}`}
+                onClick={() => handleNavSelection(item.key)}
+              >
+                <span className="mobile-panel-nav-icon" aria-hidden="true">{item.icon}</span>
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </nav>
+
+          <div className="mobile-panel-actions">
+            <label className="mobile-panel-select" htmlFor="mobile-language-select">
+              <span>{t.langLabel}</span>
+              <select
+                id="mobile-language-select"
+                value={language}
+                onChange={(event) => setLanguage(event.target.value)}
+              >
+                {languageOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.flag} {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <button type="button" className="mobile-panel-theme-btn" onClick={handleHeaderThemeToggle}>
+              {theme === 'dark' ? `☀️ ${t.lightMode}` : `🌙 ${t.darkMode}`}
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <header className={`top-header ${mobileMenuOpen ? 'mobile-menu-open' : ''}`}>
+        <div className="mobile-header-bar">
+          <button
+            type="button"
+            className="mobile-icon-btn mobile-menu-toggle"
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+            aria-expanded={mobileMenuOpen}
+            aria-label={mobileMenuOpen ? t.ariaCloseMenu : t.ariaOpenMenu}
+          >
+            <span className="mobile-menu-icon" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </span>
+          </button>
+          <button
+            type="button"
+            className="brand-group brand-home-btn mobile-brand-home-btn"
+            onClick={handleHeaderHomeClick}
+          >
+            <span className="brand-dot" aria-hidden="true" />
+            <div className="brand-text">
+              <strong>{t.brandName}</strong>
+              <small>{t.brandTagline}</small>
+            </div>
+          </button>
+          <button
+            type="button"
+            className="mobile-icon-btn mobile-utility-btn"
+            onClick={handleHeaderThemeToggle}
+            aria-label={t.ariaQuickToggle}
+          >
+            <span className="mobile-theme-icon" aria-hidden="true">
+              {theme === 'dark' ? (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="4.25" />
+                  <path d="M12 2.5v2.2" />
+                  <path d="M12 19.3v2.2" />
+                  <path d="M4.9 4.9l1.6 1.6" />
+                  <path d="M17.5 17.5l1.6 1.6" />
+                  <path d="M2.5 12h2.2" />
+                  <path d="M19.3 12h2.2" />
+                  <path d="M4.9 19.1l1.6-1.6" />
+                  <path d="M17.5 6.5l1.6-1.6" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20.2 14.2A8.7 8.7 0 1 1 9.8 3.8a7 7 0 0 0 10.4 10.4Z" />
+                </svg>
+              )}
+            </span>
+            <span className="mobile-icon-badge">{language.toUpperCase()}</span>
+          </button>
+        </div>
         <div className="brand-search-group">
-          <button type="button" className="brand-group brand-home-btn" onClick={handleBackToHome}>
+          <button type="button" className="brand-group brand-home-btn desktop-brand-home-btn" onClick={handleHeaderHomeClick}>
             <span className="brand-dot" aria-hidden="true" />
             <div className="brand-text">
               <strong>{t.brandName}</strong>
@@ -1743,7 +1983,7 @@ function App() {
             </div>
           </button>
           {!isAdminRoute && (
-            <form className="header-search" onSubmit={handleQuizSearchSubmit} role="search">
+            <form className="header-search" onSubmit={handleHeaderSearchSubmit} role="search">
               <span>{t.searchQuiz}</span>
               <input
                 id="quiz-header-search"
@@ -1769,7 +2009,7 @@ function App() {
                   <button
                     key={item}
                     className={`menu-btn ${activeView === item ? 'active' : ''}`}
-                    onClick={() => setActiveView(item)}
+                    onClick={() => handleNavSelection(item)}
                   >
                     {t.nav[item] ?? item}
                   </button>
@@ -1790,7 +2030,7 @@ function App() {
                 ))}
               </select>
             </label>
-            <button type="button" className="theme-toggle-btn" onClick={toggleTheme}>
+            <button type="button" className="theme-toggle-btn" onClick={handleHeaderThemeToggle}>
               {theme === 'dark' ? `☀️ ${t.lightMode}` : `🌙 ${t.darkMode}`}
             </button>
           </div>
