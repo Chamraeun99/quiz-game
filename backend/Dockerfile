@@ -18,7 +18,7 @@ COPY package.json package-lock.json* ./
 RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
 COPY resources ./resources
-COPY public ./public
+COPY frontend/public ./public
 COPY vite.config.ts tsconfig.json components.json ./
 RUN npm run build
 
