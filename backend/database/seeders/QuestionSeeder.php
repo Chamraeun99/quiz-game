@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Category;
 use App\Models\Question;
+use App\Models\Topic;
 use Illuminate\Database\Seeder;
 
 class QuestionSeeder extends Seeder
@@ -62,6 +63,12 @@ class QuestionSeeder extends Seeder
         ];
 
         foreach ($questions as $q) {
+            $topic = Topic::firstOrCreate([
+                'name' => $q['topic'],
+            ]);
+
+            $q['topic_id'] = $topic->id;
+
             Question::updateOrCreate(
                 ['text' => $q['text']],
                 $q,
