@@ -11,18 +11,7 @@ RUN composer install \
     --optimize-autoloader \
     --no-scripts
 
-FROM node:20-alpine AS frontend-build
-WORKDIR /app
-
-COPY package.json package-lock.json* ./
-RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
-
-COPY resources ./resources
-COPY frontend/public ./public
-COPY vite.config.ts tsconfig.json components.json ./
-RUN npm run build
-
-FROM php:8.3-cli-bookworm AS app
+FROM php:8.4-cli-bookworm AS app
 WORKDIR /var/www/html
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -42,7 +31,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 COPY . .
 COPY --from=vendor /app/vendor ./vendor
-COPY --from=frontend-build /app/public/build ./public/build
 
 RUN mkdir -p \
     storage/framework/cache \
